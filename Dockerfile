@@ -15,5 +15,5 @@ RUN composer install
 
 EXPOSE 80
 
-ENTRYPOINT ["/usr/sbin/httpd","-D","FOREGROUND"]
+
 
