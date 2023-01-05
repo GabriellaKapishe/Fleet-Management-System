@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Batch;
+use App\Models\Device;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class TransactionController extends Controller
@@ -125,6 +129,39 @@ class TransactionController extends Controller
         }
 
 
+    }
+
+    public function batchCutOff($imei){
+        $devices = Device::whereImei($imei)->first();
+        if(!isset($devices)){
+            return response()->json([
+                'code' => 404,
+                'message' => 'Device not found'
+            ],404);
+        }
+        $batch = Batch::where('imei', $imei)->first();
+        if(!isset($batch)) {
+           $batch = Batch::create([
+                'imei' => $imei
+            ]);
+           $sql = "select id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at
+                    from transaction where txn_status='COMPLETE' and tid=$devices->terminal_id group by id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at";
+        }else{
+            $dateFromDBInUTC = Carbon::now();
+            $dateFromDBInUTC->timezone = 'Africa/Harare';
+            $end_date = "'" . $dateFromDBInUTC->toDateTimeString() . "'";
+            $start_date = "'" .  $batch->updated_at . "'";
+            $sql = "select id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at
+                    from transaction where txn_status='COMPLETE' and tid=$devices->terminal_id and  created_at >= $start_date
+                      and created_at < $end_date group by id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at";
+
+        }
+        $result = DB::select(DB::raw($sql));
+        $dateFromDBInUTC = Carbon::now();
+        $batch->imei = $imei;
+        $batch->updated_at = $dateFromDBInUTC->toDateTimeString();
+        $batch->save();
+        return response([ 'code' => '200', 'description' => 'Transaction successfully fetched', 'data' =>    $result]);
     }
 
 }

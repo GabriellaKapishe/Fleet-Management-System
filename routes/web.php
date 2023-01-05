@@ -22,3 +22,4 @@ $router->get('/', function () use ($router) {
 /*************************************Third Party Transactions ***********************************/
 Route::post("/post/transaction", "TransactionController@createTransaction");
 Route::post("/check/balance", "TransactionController@checkBalance");
+Route::get("/batch-cut-off/{imei}", "TransactionController@batchCutOff");
