@@ -144,16 +144,16 @@ class TransactionController extends Controller
            $batch = Batch::create([
                 'imei' => $imei
             ]);
-           $sql = "select id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at
-                    from transaction where txn_status='COMPLETE' and tid=$devices->terminal_id group by id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at";
+           $sql = "select id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,litres as total_litres,card_currency,created_at
+                    from transaction where txn_status='COMPLETE' and tid=$devices->terminal_id group by id,amount,tid,stock_code,litres,customer_code,operator,service_station,product_currency,card_currency,created_at";
         }else{
             $dateFromDBInUTC = Carbon::now();
             $dateFromDBInUTC->timezone = 'Africa/Harare';
             $end_date = "'" . $dateFromDBInUTC->toDateTimeString() . "'";
             $start_date = "'" .  $batch->updated_at . "'";
-            $sql = "select id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at
+            $sql = "select id,amount,tid,stock_code,customer_code,litres as total_litres,operator,service_station,product_currency,card_currency,created_at
                     from transaction where txn_status='COMPLETE' and tid=$devices->terminal_id and  created_at >= $start_date
-                      and created_at < $end_date group by id,amount,tid,stock_code,customer_code,operator,service_station,product_currency,card_currency,created_at";
+                      and created_at < $end_date group by id,amount,tid,stock_code,customer_code,operator,service_station,litres,product_currency,card_currency,created_at";
 
         }
         $result = DB::select(DB::raw($sql));
